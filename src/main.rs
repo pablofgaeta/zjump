@@ -67,7 +67,7 @@ register_plugin!(State);
 impl ZellijPlugin for State {
     fn load(&mut self, configuration: BTreeMap<String, String>) {
         self.launcher = match configuration.get("mode").map(String::as_str) {
-            Some("marks") => Launcher::Marks,
+            Some("marks" | "slots") => Launcher::Marks,
             _ => Launcher::Search,
         };
         self.marks = load_marks();
@@ -165,7 +165,7 @@ impl State {
         print!(
             "{}",
             dim.paint(
-                "  j/k move · enter jump · a add current · d delete · ^j/^k reorder · esc close"
+                "  1-9 jump · j/k move · enter jump · a add current · d delete · ^j/^k reorder · esc close"
             )
         );
     }
@@ -251,7 +251,7 @@ impl State {
             })
             .collect();
 
-        scored.sort_by(|left, right| right.0.cmp(&left.0));
+        scored.sort_by_key(|item| std::cmp::Reverse(item.0));
         scored
             .into_iter()
             .map(|(_, index, indices)| (index, indices))
@@ -262,10 +262,6 @@ impl State {
         let matches = self.matches();
         let (index, _) = matches.get(self.selected)?;
         self.targets.get(*index)
-    }
-
-    fn selected_mark(&self) -> Option<&Mark> {
-        self.marks.get(self.selected)
     }
 
     fn current_target(&self) -> Option<Target> {
@@ -336,6 +332,7 @@ impl State {
             BareKey::Char('k') if ctrl => self.reorder_mark(-1),
             BareKey::Char('a') if !ctrl => self.add_current_mark(),
             BareKey::Char('d') if !ctrl => self.delete_selected_mark(),
+            BareKey::Char(character) if !ctrl => self.jump_mark_slot(character),
             _ => false,
         }
     }
@@ -370,7 +367,22 @@ impl State {
     }
 
     fn jump_selected_mark(&mut self) {
-        let Some(mark) = self.selected_mark().cloned() else {
+        self.jump_mark_at(self.selected);
+    }
+
+    fn jump_mark_slot(&mut self, character: char) -> bool {
+        let Some(index) = mark_slot_index(character) else {
+            return false;
+        };
+        if index >= self.marks.len() {
+            return false;
+        }
+        self.jump_mark_at(index);
+        false
+    }
+
+    fn jump_mark_at(&self, index: usize) {
+        let Some(mark) = self.marks.get(index).cloned() else {
             return;
         };
         let is_current_session = self
@@ -552,6 +564,13 @@ impl Mark {
     }
 }
 
+fn mark_slot_index(character: char) -> Option<usize> {
+    match character {
+        '1'..='9' => Some(character as usize - '1' as usize),
+        _ => None,
+    }
+}
+
 fn load_marks() -> Vec<Mark> {
     fs::read_to_string(MARKS_PATH)
         .map(|contents| contents.lines().filter_map(Mark::deserialize).collect())
@@ -695,5 +714,17 @@ mod tests {
         assert!(state.reorder_mark(-1));
         assert_eq!(state.selected, 1);
         assert_eq!(state.marks[1].label, "a");
+    }
+
+    #[test]
+    fn mark_numeric_slots_are_one_indexed() {
+        assert_eq!(mark_slot_index('1'), Some(0));
+        assert_eq!(mark_slot_index('9'), Some(8));
+    }
+
+    #[test]
+    fn mark_numeric_slots_reject_non_slot_keys() {
+        assert_eq!(mark_slot_index('0'), None);
+        assert_eq!(mark_slot_index('a'), None);
     }
 }

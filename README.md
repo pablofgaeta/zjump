@@ -5,7 +5,7 @@ Fast fuzzy and marked jumps for Zellij sessions, tabs, and panes.
 ## Modes
 
 - Search mode: fuzzy-search every live `(session, tab)` and jump with Enter.
-- Marks mode: keep an ordered list of favorite tabs or panes.
+- Marks/slots mode: keep an ordered list of favorite tabs or panes.
 
 ## Suggested keybinds
 
@@ -21,7 +21,7 @@ bind "Alt m" {
     LaunchOrFocusPlugin "file:/path/to/zjump.wasm" {
         floating true
         move_to_focused_tab true
-        mode "marks"
+        mode "slots"
     };
 }
 ```
@@ -33,8 +33,11 @@ bind "Alt m" {
 - `Up`/`Down` or `Ctrl-p`/`Ctrl-n`: move selection.
 - `Esc` or `Ctrl-c`: close.
 
-## Marks mode
+## Marks/slots mode
 
+Use `mode "marks"` or `mode "slots"`.
+
+- `1`-`9`: jump directly to that saved slot.
 - `a`: add the current focused tab/pane.
 - `d`: delete the selected mark.
 - `j`/`k`: move selection.
