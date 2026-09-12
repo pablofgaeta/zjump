@@ -357,13 +357,12 @@ impl State {
         let Some(target) = self.selected_target().cloned() else {
             return;
         };
-        jump_to(
+        close_and_jump_to(
             &target.session,
             target.tab_position,
             None,
             target.is_current_session,
         );
-        close_self();
     }
 
     fn jump_selected_mark(&mut self) {
@@ -389,13 +388,12 @@ impl State {
             .targets
             .iter()
             .any(|target| target.session == mark.session && target.is_current_session);
-        jump_to(
+        close_and_jump_to(
             &mark.session,
             mark.tab_position,
             mark.pane_id,
             is_current_session,
         );
-        close_self();
     }
 
     fn add_current_mark(&mut self) -> bool {
@@ -440,12 +438,13 @@ impl State {
     }
 }
 
-fn jump_to(
+fn close_and_jump_to(
     session: &str,
     tab_position: usize,
     pane_id: Option<(u32, bool)>,
     is_current_session: bool,
 ) {
+    close_self();
     if is_current_session && pane_id.is_none() {
         // switch_tab_to is 1-indexed; TabInfo::position is 0-indexed.
         switch_tab_to(tab_position as u32 + 1);
