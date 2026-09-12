@@ -1,0 +1,17 @@
+# Fuzzy jumper over every (session, tab) in the zellij instance.
+#
+# Deliberately not a member of modules/zellij-agent-plugins: that workspace is
+# scoped to the agent-status readers, which share agent-status-core and never
+# mutate zellij state. This plugin shares no code with them and does nothing
+# but mutate zellij state, so it stands alone until it moves to its own repo.
+[workspace]
+
+[package]
+name = "zjump"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ansi_term = { version = "0.12.1", default-features = false }
+# Pinned to the zellij binary from nixpkgs, as the sibling plugins are.
+zellij-tile = "0.45.1"
